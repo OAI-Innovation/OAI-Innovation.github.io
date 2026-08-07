@@ -1,0 +1,984 @@
+<title>AI Type Selector</title>
+<script>
+  if(new URLSearchParams(window.location.search).get("display") === "tile"){
+    document.documentElement.classList.add("tile-embed");
+  }
+</script>
+<style>
+  /* ===== Tokens — NSW Digital Design System palette ===== */
+  :root{
+    --brand:#002664; --brand-strong:#001642; --on-brand:#ffffff;
+    --link:#002664; --link-hover:#146cfd; --focus:#146cfd;
+    --ink:#151a1e; --ink-muted:#495054; --ink-faint:#6a7175;
+    --border:#dcdfe1; --border-strong:#acb3b7;
+    --surface:#ffffff; --surface-subtle:#f2f2f2; --surface-sunken:#ebebeb;
+    --critical-bg:#ffe6ea; --critical-fg:#630019; --critical-border:#ffb8c1;
+    --good-bg:#dbfadf; --good-fg:#004000;
+    --tag-baseline-bg:#ebebeb; --tag-baseline-fg:#363c40;
+    --tag-core-bg:#cbedfd; --tag-core-fg:#002664;
+    --tag-grounding-bg:#d1eeea; --tag-grounding-fg:#0b3f47;
+    --tag-orchestration-bg:#e6e1fd; --tag-orchestration-fg:#441170;
+    --tag-interaction-bg:#fdeddf; --tag-interaction-fg:#941b00;
+    --shadow:0 1px 2px rgba(21,26,30,0.06), 0 1px 12px rgba(21,26,30,0.05);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --brand:#8ce0ff; --brand-strong:#cbedfd; --on-brand:#0b1116;
+      --link:#8ce0ff; --link-hover:#cbedfd; --focus:#8ce0ff;
+      --ink:#f2f2f2; --ink-muted:#cdd3d6; --ink-faint:#acb3b7;
+      --border:#3d444a; --border-strong:#565f65;
+      --surface:#12161a; --surface-subtle:#1b2126; --surface-sunken:#22272b;
+      --critical-bg:rgba(215,21,58,0.16); --critical-fg:#ffb8c1; --critical-border:rgba(215,21,58,0.45);
+      --good-bg:rgba(0,170,69,0.14); --good-fg:#a8edb3;
+      --tag-baseline-bg:#2a3036; --tag-baseline-fg:#dcdfe1;
+      --tag-core-bg:rgba(20,108,253,0.2); --tag-core-fg:#8ce0ff;
+      --tag-grounding-bg:rgba(46,128,142,0.24); --tag-grounding-fg:#8cdbe5;
+      --tag-orchestration-bg:rgba(128,85,241,0.24); --tag-orchestration-fg:#cebfff;
+      --tag-interaction-bg:rgba(243,99,27,0.22); --tag-interaction-fg:#ffce99;
+      --shadow:0 1px 2px rgba(0,0,0,0.4), 0 1px 16px rgba(0,0,0,0.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --brand:#8ce0ff; --brand-strong:#cbedfd; --on-brand:#0b1116;
+    --link:#8ce0ff; --link-hover:#cbedfd; --focus:#8ce0ff;
+    --ink:#f2f2f2; --ink-muted:#cdd3d6; --ink-faint:#acb3b7;
+    --border:#3d444a; --border-strong:#565f65;
+    --surface:#12161a; --surface-subtle:#1b2126; --surface-sunken:#22272b;
+    --critical-bg:rgba(215,21,58,0.16); --critical-fg:#ffb8c1; --critical-border:rgba(215,21,58,0.45);
+    --good-bg:rgba(0,170,69,0.14); --good-fg:#a8edb3;
+    --tag-baseline-bg:#2a3036; --tag-baseline-fg:#dcdfe1;
+    --tag-core-bg:rgba(20,108,253,0.2); --tag-core-fg:#8ce0ff;
+    --tag-grounding-bg:rgba(46,128,142,0.24); --tag-grounding-fg:#8cdbe5;
+    --tag-orchestration-bg:rgba(128,85,241,0.24); --tag-orchestration-fg:#cebfff;
+    --tag-interaction-bg:rgba(243,99,27,0.22); --tag-interaction-fg:#ffce99;
+    --shadow:0 1px 2px rgba(0,0,0,0.4), 0 1px 16px rgba(0,0,0,0.35);
+    color-scheme: dark;
+  }
+  :root[data-theme="light"]{
+    --brand:#002664; --brand-strong:#001642; --on-brand:#ffffff;
+    --link:#002664; --link-hover:#146cfd; --focus:#146cfd;
+    --ink:#151a1e; --ink-muted:#495054; --ink-faint:#6a7175;
+    --border:#dcdfe1; --border-strong:#acb3b7;
+    --surface:#ffffff; --surface-subtle:#f2f2f2; --surface-sunken:#ebebeb;
+    --critical-bg:#ffe6ea; --critical-fg:#630019; --critical-border:#ffb8c1;
+    --good-bg:#dbfadf; --good-fg:#004000;
+    --tag-baseline-bg:#ebebeb; --tag-baseline-fg:#363c40;
+    --tag-core-bg:#cbedfd; --tag-core-fg:#002664;
+    --tag-grounding-bg:#d1eeea; --tag-grounding-fg:#0b3f47;
+    --tag-orchestration-bg:#e6e1fd; --tag-orchestration-fg:#441170;
+    --tag-interaction-bg:#fdeddf; --tag-interaction-fg:#941b00;
+    --shadow:0 1px 2px rgba(21,26,30,0.06), 0 1px 12px rgba(21,26,30,0.05);
+    color-scheme: light;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  @media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto; } }
+  body{
+    margin:0; background:var(--surface); color:var(--ink);
+    font-family:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  h1,h2{ font-weight:700; line-height:1.2; text-wrap:balance; margin:0; color:var(--ink); }
+  h1{ font-size:1.7rem; }
+  p{ margin:0; }
+  a{ color:var(--link); }
+  button{ font-family:inherit; }
+  button:focus-visible, textarea:focus-visible, summary:focus-visible, a:focus-visible{
+    outline:3px solid var(--focus); outline-offset:2px; border-radius:3px;
+  }
+
+  .topbar{ background:var(--brand); color:var(--on-brand); padding:0.55rem 0; border-bottom:4px solid var(--brand-strong); }
+  .topbar-inner{ max-width:76rem; margin:0 auto; padding:0 1.5rem; display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+  .topbar-eyebrow{ font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; opacity:0.9; }
+  .topbar-note{ font-size:0.76rem; opacity:0.8; }
+
+  .app-header{ border-bottom:1px solid var(--border); background:var(--surface-subtle); }
+  .app-header-inner{ max-width:76rem; margin:0 auto; padding:1.9rem 1.5rem 1.6rem; display:flex; justify-content:space-between; align-items:flex-end; gap:1.5rem; flex-wrap:wrap; }
+  .app-kicker{ display:inline-block; font-size:0.7rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--brand); background:var(--tag-core-bg); padding:0.28em 0.65em; border-radius:3px; margin-bottom:0.6rem; }
+  .app-dek{ font-size:0.95rem; color:var(--ink-muted); max-width:52ch; margin-top:0.45rem; }
+  .header-actions{ display:flex; align-items:center; gap:0.65rem; flex-wrap:wrap; }
+  .fullscreen-btn{ display:inline-flex; align-items:center; gap:0.45rem; font-size:0.8rem; font-weight:600; color:var(--on-brand); background:var(--brand); border:1px solid var(--brand); border-radius:6px; padding:0.45em 0.9em; cursor:pointer; white-space:nowrap; }
+  .fullscreen-btn[hidden]{ display:none; }
+  .fullscreen-btn:hover{ background:var(--brand-strong); border-color:var(--brand-strong); }
+  .fullscreen-btn svg{ width:1rem; height:1rem; flex:none; }
+  .fullscreen-btn .icon-collapse{ display:none; }
+  .fullscreen-btn[aria-pressed="true"] .icon-expand{ display:none; }
+  .fullscreen-btn[aria-pressed="true"] .icon-collapse{ display:block; }
+  .reset-link{ font-size:0.8rem; color:var(--ink-faint); background:none; border:1px solid var(--border-strong); border-radius:6px; padding:0.45em 0.9em; cursor:pointer; white-space:nowrap; }
+  .reset-link:hover{ border-color:var(--brand); color:var(--brand); }
+  .fullscreen-status{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  html:fullscreen{ background:var(--surface); }
+  :fullscreen .fullscreen-btn{ position:fixed; top:1rem; right:1rem; z-index:1000; box-shadow:var(--shadow); }
+
+  /* ===== Compact SharePoint launcher ===== */
+  .tile-launcher{ display:none; }
+  html.tile-embed:not(:fullscreen) .tile-launcher{ display:flex; align-items:center; width:100%; height:100vh; min-height:3.5rem; padding:0.25rem; background:var(--surface); }
+  html.tile-embed:not(:fullscreen) .app-view{ display:none; }
+  html.tile-embed:fullscreen .tile-launcher{ display:none; }
+  html.tile-embed:fullscreen .app-view{ display:block; }
+  .tile-launch-button{ width:min(100%,22rem); min-height:3rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.65rem 0.9rem; color:var(--brand); background:var(--surface); border:1px solid var(--border-strong); border-left:4px solid var(--brand); border-radius:6px; font:inherit; font-size:0.9rem; font-weight:700; text-align:left; cursor:pointer; }
+  .tile-launch-button:hover{ color:var(--on-brand); background:var(--brand); border-color:var(--brand); }
+  .tile-launch-button svg{ width:1rem; height:1rem; flex:none; }
+  .tile-status{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+  .app-shell{ max-width:76rem; margin:0 auto; padding:1.8rem 1.5rem 4.5rem; display:grid; grid-template-columns:23rem minmax(0,1fr); gap:2rem; align-items:start; }
+  @media (max-width:60rem){ .app-shell{ grid-template-columns:1fr; } }
+
+  .control-col{ display:flex; flex-direction:column; gap:1.1rem; position:sticky; top:1.25rem; }
+  @media (max-width:60rem){ .control-col{ position:static; } }
+
+  .panel{ border:1px solid var(--border); border-radius:8px; background:var(--surface); box-shadow:var(--shadow); padding:1.15rem 1.25rem; }
+  .panel-title{ font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-faint); margin-bottom:0.7rem; }
+
+  .usecase-label{ display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.5rem; }
+  .usecase-input{ width:100%; min-height:7rem; resize:vertical; padding:0.75rem 0.85rem; border:1px solid var(--border-strong); border-radius:6px; font:inherit; font-size:0.95rem; color:var(--ink); background:var(--surface); line-height:1.5; }
+  .usecase-input:focus-visible{ border-color:var(--focus); }
+
+  .example-row{ display:flex; flex-wrap:wrap; gap:0.45rem; margin-top:0.85rem; }
+  .example-chip{ font-size:0.75rem; padding:0.35em 0.7em; border-radius:999px; border:1px solid var(--border); background:var(--surface-subtle); color:var(--ink-muted); cursor:pointer; }
+  .example-chip:hover{ border-color:var(--brand); color:var(--brand); }
+
+  .filters-summary{ display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; }
+  .filters-summary:empty::after{ content:"No characteristics selected yet — type a use case or tap a trait below."; font-size:0.8rem; color:var(--ink-faint); }
+  .filter-chip{ display:inline-flex; align-items:center; gap:0.35em; font-size:0.75rem; padding:0.28em 0.35em 0.28em 0.65em; border-radius:999px; background:var(--tag-core-bg); color:var(--tag-core-fg); font-weight:600; border:none; }
+  .filter-chip .x-btn{ border:none; background:none; color:inherit; cursor:pointer; font-size:0.95em; line-height:1; padding:0.1em 0.3em; border-radius:50%; }
+  .filter-chip .x-btn:hover{ background:rgba(0,0,0,0.12); }
+  .clear-all-btn{ font-size:0.76rem; color:var(--ink-faint); background:none; border:none; cursor:pointer; text-decoration:underline; text-underline-offset:0.2em; padding:0.2em 0; }
+
+  .question-card{ border-left:4px solid var(--brand); }
+  .question-progress{ font-size:0.7rem; color:var(--ink-faint); margin-bottom:0.35rem; }
+  .question-text{ font-size:0.92rem; font-weight:600; margin-bottom:0.7rem; }
+  .option-row{ display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:0.65rem; }
+  .option-btn{ font-size:0.8rem; padding:0.4em 0.75em; border-radius:6px; border:1px solid var(--border-strong); background:var(--surface); color:var(--ink); cursor:pointer; }
+  .option-btn:hover{ border-color:var(--brand); color:var(--brand); }
+  .option-btn[aria-pressed="true"]{ background:var(--brand); border-color:var(--brand); color:var(--on-brand); }
+  .question-actions{ display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+  .question-actions button{ font-size:0.76rem; color:var(--ink-faint); background:none; border:none; cursor:pointer; text-decoration:underline; text-underline-offset:0.2em; padding:0; }
+  .question-done{ font-size:0.85rem; color:var(--good-fg); }
+
+  .results-header{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem 1.25rem; margin-bottom:1rem; }
+  .results-count{ font-size:0.98rem; font-weight:700; }
+  .confidence-meter{ display:flex; align-items:center; gap:0.5rem; font-size:0.76rem; color:var(--ink-faint); }
+  .confidence-track{ width:6rem; height:0.4rem; border-radius:999px; background:var(--surface-sunken); overflow:hidden; }
+  .confidence-fill{ height:100%; background:var(--brand); }
+  .confidence-num{ font-variant-numeric:tabular-nums; color:var(--ink-muted); font-weight:600; }
+
+  .empty-hint{ font-size:0.85rem; color:var(--ink-faint); margin-bottom:1.1rem; max-width:60ch; }
+  .layer-heading{ font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-faint); margin:1.3rem 0 0.6rem; }
+  .layer-heading:first-child{ margin-top:0; }
+
+  .result-list{ display:flex; flex-direction:column; gap:0.8rem; }
+  .result-card{ border:1px solid var(--border); border-radius:8px; background:var(--surface); box-shadow:var(--shadow); padding:0.95rem 1.1rem; }
+  .result-card.is-top{ border-color:var(--brand); }
+  .result-top-row{ display:flex; align-items:flex-start; gap:0.7rem; }
+  .rank-badge{ flex:none; width:1.85rem; height:1.85rem; border-radius:50%; background:var(--surface-subtle); color:var(--ink-muted); display:flex; align-items:center; justify-content:center; font-size:0.78rem; font-weight:700; font-variant-numeric:tabular-nums; }
+  .result-card.is-top .rank-badge{ background:var(--brand); color:var(--on-brand); }
+  .result-heading{ flex:1; min-width:0; }
+  .result-name-row{ display:flex; align-items:center; gap:0.55rem; flex-wrap:wrap; }
+  .result-name{ font-size:0.98rem; font-weight:700; }
+  .result-blurb{ font-size:0.82rem; color:var(--ink-muted); margin-top:0.2rem; }
+  .result-score{ flex:none; text-align:right; min-width:3.2rem; }
+  .score-num{ font-size:1rem; font-weight:700; color:var(--brand); font-variant-numeric:tabular-nums; }
+  .score-track{ width:3.2rem; height:0.32rem; border-radius:999px; background:var(--surface-sunken); margin-top:0.28rem; overflow:hidden; }
+  .score-fill{ height:100%; background:var(--brand); }
+
+  .tag{ display:inline-block; font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:0.24em 0.55em; border-radius:3px; white-space:nowrap; }
+  .tag-baseline{ background:var(--tag-baseline-bg); color:var(--tag-baseline-fg); }
+  .tag-core{ background:var(--tag-core-bg); color:var(--tag-core-fg); }
+  .tag-grounding{ background:var(--tag-grounding-bg); color:var(--tag-grounding-fg); }
+  .tag-orchestration{ background:var(--tag-orchestration-bg); color:var(--tag-orchestration-fg); }
+  .tag-interaction{ background:var(--tag-interaction-bg); color:var(--tag-interaction-fg); }
+
+  .trait-row{ display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.7rem; }
+  .trait-chip{ font-size:0.71rem; padding:0.26em 0.58em; border-radius:999px; border:1px solid var(--border); background:var(--surface-subtle); color:var(--ink-muted); cursor:pointer; }
+  .trait-chip:hover{ border-color:var(--brand); }
+  .trait-chip[aria-pressed="true"]{ background:var(--tag-core-bg); border-color:transparent; color:var(--tag-core-fg); font-weight:600; }
+
+  .note-row{ margin-top:0.55rem; font-size:0.77rem; }
+  .note-blocked{ color:var(--critical-fg); }
+  .note-companions{ color:var(--ink-faint); margin-top:0.25rem; }
+
+  .more-toggle{ margin-top:0.5rem; }
+  .more-toggle summary{ cursor:pointer; font-size:0.82rem; color:var(--brand); list-style:none; }
+  .more-toggle summary::-webkit-details-marker{ display:none; }
+  .more-toggle summary::before{ content:"▸ "; }
+  .more-toggle[open] summary::before{ content:"▾ "; }
+  .more-toggle .result-list{ margin-top:0.8rem; }
+
+  footer.page-footer{ border-top:1px solid var(--border); background:var(--surface-subtle); padding:1.5rem; }
+  .page-footer-inner{ max-width:76rem; margin:0 auto; font-size:0.78rem; color:var(--ink-faint); }
+</style>
+
+<section class="tile-launcher" id="tile-launcher" aria-label="AI Type Selector launcher">
+  <button class="tile-launch-button" id="tile-launch-button" type="button" aria-label="Open AI Type Selector in full screen">
+    <span>AI Type Selector</span>
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
+    </svg>
+  </button>
+  <p class="tile-status" id="tile-status" role="status" aria-live="polite"></p>
+</section>
+
+<div class="app-view" id="app-view">
+<div class="topbar">
+  <div class="topbar-inner">
+    <span class="topbar-eyebrow">Live selector tool</span>
+    <span class="topbar-note">Not an official NSW Government publication</span>
+  </div>
+</div>
+
+<header class="app-header">
+  <div class="app-header-inner">
+    <div>
+      <span class="app-kicker">AI Type Selector</span>
+      <h1>Find the right AI approach for your use case</h1>
+      <p class="app-dek">Start typing, answer a quick question, or tap a characteristic on any match below — the list narrows as your use case gets clearer.</p>
+    </div>
+    <div class="header-actions">
+      <button class="fullscreen-btn" id="fullscreen-btn" type="button" aria-pressed="false" hidden>
+        <svg class="icon-expand" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
+        </svg>
+        <svg class="icon-collapse" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5" />
+        </svg>
+        <span id="fullscreen-label">Full screen</span>
+      </button>
+      <button class="reset-link" id="reset-btn" type="button">Reset everything</button>
+    </div>
+    <p class="fullscreen-status" id="fullscreen-status" role="status" aria-live="polite"></p>
+  </div>
+</header>
+
+<div class="app-shell">
+  <div class="control-col">
+    <div class="panel">
+      <label class="usecase-label" for="usecase">Describe your use case</label>
+      <textarea class="usecase-input" id="usecase" placeholder="e.g. Answer procurement policy questions from our current documents with citations"></textarea>
+      <div class="example-row" id="example-row"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Characteristics selected</div>
+      <div class="filters-summary" id="filters-summary"></div>
+      <button class="clear-all-btn" id="clear-filters-btn" type="button" style="margin-top:0.6rem;">Clear all characteristics</button>
+    </div>
+
+    <div class="panel question-card" id="question-card"></div>
+  </div>
+
+  <main>
+    <div class="results-header">
+      <span class="results-count" id="results-count"></span>
+      <span class="confidence-meter" id="confidence-meter"></span>
+    </div>
+    <p class="empty-hint" id="empty-hint"></p>
+    <div id="results-root"></div>
+  </main>
+</div>
+
+<footer class="page-footer">
+  <div class="page-footer-inner">
+    Scoring runs entirely in your browser — nothing you type is sent anywhere. Ranking logic follows the taxonomy, attribute weights, and hard rules from the accompanying specification. Single self-contained HTML file, no external requests.
+  </div>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ Attribute catalog ============ */
+var ATTR = {
+  primaryTask:{priority:5, labels:{
+    rule_execution:"Rule execution", classification:"Classification", forecasting:"Forecasting",
+    anomaly_detection:"Anomaly detection", ranking_recommendation:"Ranking / recommendation",
+    structured_extraction:"Structured extraction", retrieve_answer:"Retrieve & answer",
+    free_generation:"Open-ended generation", optimization:"Optimization",
+    interactive_support:"Interactive support", action_execution:"Action execution", graph_reasoning:"Graph reasoning"
+  }},
+  modalities:{priority:5, multi:true, labels:{
+    tabular:"Tabular", timeseries:"Time series", text:"Text", image:"Image", video:"Video",
+    audio:"Audio", graph:"Graph", multimodal:"Multimodal"
+  }},
+  determinismRequired:{priority:5, labels:{ hard:"Hard — always identical", high:"High", medium:"Medium", low:"Low" }},
+  criticality:{priority:5, labels:{ low:"Low stakes", moderate:"Moderate", high:"High-risk", very_high:"Very high-risk" }},
+  autonomyLevel:{priority:5, labels:{
+    none:"No autonomy", decision_support:"Decision support only", human_in_the_loop:"Human approves each step",
+    human_on_the_loop:"Human supervises", human_out_of_the_loop:"Fully autonomous"
+  }},
+  humanOversightRequired:{priority:5, labels:{ mandatory:"Mandatory review", recommended:"Recommended", minimal:"Minimal" }},
+  groundingNeed:{priority:4, labels:{
+    none:"None", enterprise_docs:"Enterprise documents", web_freshness:"Live web data",
+    knowledge_graph:"Knowledge graph", citations_required:"Citations required"
+  }},
+  knowledgeFreshness:{priority:4, labels:{ static:"Static", periodic:"Periodically updated", current:"Must be current" }},
+  latencyClass:{priority:4, labels:{
+    hard_realtime:"Hard real-time", interactive_subsecond:"Sub-second", seconds:"A few seconds",
+    minutes:"Minutes", batch:"Batch / offline"
+  }},
+  explainabilityNeed:{priority:4, labels:{ high:"High", medium:"Medium", low:"Low" }},
+  labeledDataAvailability:{priority:4, labels:{ none:"None", low:"A little", moderate:"Moderate", high:"Plenty" }},
+  outputVerifiability:{priority:4, labels:{ objective:"Objectively checkable", partly_objective:"Partly checkable", subjective:"Subjective" }},
+  privacySensitivity:{priority:4, labels:{
+    public:"Public", internal:"Internal", confidential:"Confidential",
+    regulated_pii:"Regulated PII", special_category:"Special category"
+  }},
+  costSensitivity:{priority:3, labels:{ low:"Low", medium:"Medium", high:"High" }},
+  personalizationNeed:{priority:3, labels:{ none:"None", segment:"By segment", individual:"Per individual" }},
+  constraintComplexity:{priority:3, labels:{ none:"None", light:"Light", heavy:"Heavy" }},
+  taskDecomposability:{priority:3, labels:{ fixed_steps:"Fixed steps", partly_predictable:"Partly predictable", open_ended:"Open-ended" }},
+  environmentActionNeed:{priority:3, labels:{
+    none:"None", read_only_tools:"Read-only tools", write_actions:"Can write / change things", real_world_actions:"Real-world actions"
+  }},
+  subtaskSpecialization:{priority:3, labels:{ multiple_specialists:"Needs specialist roles", single:"Single role" }}
+};
+
+function labelFor(attr, value){
+  var a = ATTR[attr];
+  return (a && a.labels && a.labels[value]) || value;
+}
+
+/* ============ Candidate profiles (14) ============ */
+var CANDIDATES = [
+  { id:"deterministic_automation", label:"Deterministic automation", layer:"baseline",
+    blurb:"Human-authored rules and decision tables that execute fixed logic.",
+    strongWhen:{ primaryTask:["rule_execution"], determinismRequired:["hard","high"], criticality:["high","very_high"], latencyClass:["hard_realtime","interactive_subsecond"], explainabilityNeed:["high"] },
+    penalizeWhen:{ primaryTask:["free_generation"], taskDecomposability:["open_ended"] },
+    companions:["chatbot_ui","llm_workflow"],
+    traits:[ {attr:"determinismRequired",value:"hard",label:"Must be deterministic"}, {attr:"primaryTask",value:"rule_execution",label:"Rule execution"}, {attr:"explainabilityNeed",value:"high",label:"Fully explainable"}, {attr:"latencyClass",value:"interactive_subsecond",label:"Real-time"} ] },
+
+  { id:"predictive_ml", label:"Predictive ML", layer:"core",
+    blurb:"Learns patterns from data to classify, forecast, rank, or flag anomalies.",
+    strongWhen:{ primaryTask:["classification","forecasting","anomaly_detection"], modalities:["tabular","timeseries"], labeledDataAvailability:["moderate","high"], outputVerifiability:["objective"] },
+    penalizeWhen:{ knowledgeFreshness:["current"], determinismRequired:["hard"] },
+    companions:["deterministic_automation","optimization_ai"],
+    traits:[ {attr:"primaryTask",value:"forecasting",label:"Forecasting"}, {attr:"primaryTask",value:"anomaly_detection",label:"Anomaly detection"}, {attr:"modalities",value:"tabular",label:"Tabular data"}, {attr:"labeledDataAvailability",value:"high",label:"Lots of labeled data"} ] },
+
+  { id:"recommender_system", label:"Recommender / personalization", layer:"core",
+    blurb:"Profiles users and adapts rankings or suggestions over time.",
+    strongWhen:{ primaryTask:["ranking_recommendation"], personalizationNeed:["segment","individual"], modalities:["tabular","text","multimodal"] },
+    companions:["chatbot_ui","llm"],
+    traits:[ {attr:"primaryTask",value:"ranking_recommendation",label:"Ranking / recommendations"}, {attr:"personalizationNeed",value:"individual",label:"Personalized per user"} ] },
+
+  { id:"computer_vision", label:"Computer vision", layer:"core",
+    blurb:"Recognizes, segments, classifies or detects objects and events in images or video.",
+    strongWhen:{ modalities:["image","video"], primaryTask:["classification","structured_extraction","anomaly_detection"] },
+    companions:["llm_workflow","deterministic_automation"],
+    traits:[ {attr:"modalities",value:"image",label:"Images"}, {attr:"modalities",value:"video",label:"Video"}, {attr:"primaryTask",value:"anomaly_detection",label:"Defect detection"}, {attr:"primaryTask",value:"structured_extraction",label:"OCR / extraction"} ] },
+
+  { id:"speech_audio_ai", label:"Speech & audio AI", layer:"core",
+    blurb:"Transcribes, recognizes speakers/languages, or transforms audio.",
+    strongWhen:{ modalities:["audio"], primaryTask:["structured_extraction","interactive_support","retrieve_answer"] },
+    companions:["chatbot_ui","traditional_nlp","llm_workflow"],
+    traits:[ {attr:"modalities",value:"audio",label:"Audio / voice"}, {attr:"primaryTask",value:"structured_extraction",label:"Transcription"}, {attr:"primaryTask",value:"retrieve_answer",label:"Voice search"} ] },
+
+  { id:"traditional_nlp", label:"Traditional NLP & extraction", layer:"core",
+    blurb:"Structured text processing: classification, entity extraction, search, translation.",
+    strongWhen:{ modalities:["text"], primaryTask:["structured_extraction","classification"], latencyClass:["hard_realtime","interactive_subsecond"], costSensitivity:["high"] },
+    penalizeWhen:{ primaryTask:["free_generation"] },
+    companions:["deterministic_automation","chatbot_ui"],
+    traits:[ {attr:"modalities",value:"text",label:"Text"}, {attr:"primaryTask",value:"structured_extraction",label:"Entity extraction"}, {attr:"primaryTask",value:"classification",label:"Classification"}, {attr:"costSensitivity",value:"high",label:"Cost-sensitive"} ] },
+
+  { id:"llm", label:"LLM", layer:"core",
+    blurb:"Generates or transforms text using large-scale pretraining.",
+    strongWhen:{ modalities:["text","multimodal"], primaryTask:["free_generation","interactive_support","structured_extraction"], labeledDataAvailability:["none","low"], taskDecomposability:["partly_predictable","open_ended"] },
+    penalizeWhen:{ determinismRequired:["hard"], criticality:["very_high"], knowledgeFreshness:["current"], groundingNeed:["enterprise_docs","citations_required"] },
+    companions:["rag","llm_workflow","chatbot_ui"],
+    traits:[ {attr:"primaryTask",value:"free_generation",label:"Open-ended writing"}, {attr:"modalities",value:"text",label:"Text"}, {attr:"labeledDataAvailability",value:"none",label:"No labeled data"}, {attr:"taskDecomposability",value:"open_ended",label:"Open-ended task"} ] },
+
+  { id:"rag", label:"RAG (retrieval-augmented generation)", layer:"grounding",
+    blurb:"Combines an LLM with retrieval over your own knowledge sources.",
+    strongWhen:{ primaryTask:["retrieve_answer","structured_extraction","free_generation"], modalities:["text"], groundingNeed:["enterprise_docs","web_freshness","citations_required"], knowledgeFreshness:["periodic","current"], explainabilityNeed:["high"] },
+    penalizeWhen:{ latencyClass:["hard_realtime"], determinismRequired:["hard"] },
+    companions:["chatbot_ui","llm_workflow"],
+    traits:[ {attr:"primaryTask",value:"retrieve_answer",label:"Answer from documents"}, {attr:"groundingNeed",value:"citations_required",label:"Needs citations"}, {attr:"knowledgeFreshness",value:"current",label:"Current knowledge"}, {attr:"explainabilityNeed",value:"high",label:"Sources inspectable"} ] },
+
+  { id:"llm_workflow", label:"LLM workflow", layer:"orchestration",
+    blurb:"Predefined multi-step orchestration of LLM calls and tools across fixed code paths.",
+    strongWhen:{ taskDecomposability:["fixed_steps","partly_predictable"], humanOversightRequired:["mandatory","recommended"], criticality:["moderate","high"], outputVerifiability:["objective","partly_objective"] },
+    penalizeWhen:{ taskDecomposability:["open_ended"], latencyClass:["hard_realtime"] },
+    companions:["llm","rag","computer_vision","speech_audio_ai"],
+    traits:[ {attr:"taskDecomposability",value:"fixed_steps",label:"Fixed multi-step process"}, {attr:"humanOversightRequired",value:"mandatory",label:"Human checkpoint required"}, {attr:"outputVerifiability",value:"objective",label:"Checkable output"} ] },
+
+  { id:"chatbot_ui", label:"Chatbot / conversational assistant", layer:"interaction",
+    blurb:"A conversational interface — pairs with rules, search, LLMs, RAG or agents underneath.",
+    strongWhen:{ primaryTask:["interactive_support","retrieve_answer"], modalities:["text","audio"] },
+    companions:["deterministic_automation","traditional_nlp","llm","rag","ai_agent"],
+    traits:[ {attr:"primaryTask",value:"interactive_support",label:"Conversational support"}, {attr:"modalities",value:"text",label:"Text or voice"} ] },
+
+  { id:"ai_agent", label:"AI agent", layer:"orchestration",
+    blurb:"Reasons, chooses tools, acts, and iterates based on environment feedback.",
+    strongWhen:{ primaryTask:["action_execution","interactive_support"], taskDecomposability:["open_ended"], environmentActionNeed:["write_actions","real_world_actions"], autonomyLevel:["human_on_the_loop","human_out_of_the_loop"] },
+    penalizeWhen:{ criticality:["high","very_high"], humanOversightRequired:["mandatory"], determinismRequired:["hard"] },
+    companions:["llm","rag","chatbot_ui"],
+    traits:[ {attr:"taskDecomposability",value:"open_ended",label:"Open-ended task"}, {attr:"environmentActionNeed",value:"write_actions",label:"Takes actions in systems"}, {attr:"autonomyLevel",value:"human_on_the_loop",label:"Supervised autonomy"} ] },
+
+  { id:"multi_agent_system", label:"Multi-agent system", layer:"orchestration",
+    blurb:"Multiple specialized agents coordinate, decompose tasks, and exchange work.",
+    strongWhen:{ taskDecomposability:["open_ended"], environmentActionNeed:["write_actions","real_world_actions"], subtaskSpecialization:["multiple_specialists"] },
+    penalizeWhen:{ costSensitivity:["high"], latencyClass:["interactive_subsecond","hard_realtime"] },
+    companions:["ai_agent","llm_workflow"],
+    traits:[ {attr:"taskDecomposability",value:"open_ended",label:"Open-ended task"}, {attr:"subtaskSpecialization",value:"multiple_specialists",label:"Needs specialist roles"}, {attr:"environmentActionNeed",value:"write_actions",label:"Takes actions in systems"} ] },
+
+  { id:"optimization_ai", label:"Goal-driven optimization", layer:"core",
+    blurb:"Searches for the best feasible solution under costs, constraints or objectives.",
+    strongWhen:{ primaryTask:["optimization"], constraintComplexity:["heavy"], outputVerifiability:["objective"], determinismRequired:["high","hard"] },
+    companions:["predictive_ml","computer_vision","deterministic_automation"],
+    traits:[ {attr:"primaryTask",value:"optimization",label:"Optimization under constraints"}, {attr:"constraintComplexity",value:"heavy",label:"Many constraints"}, {attr:"outputVerifiability",value:"objective",label:"Objectively checkable"} ] },
+
+  { id:"knowledge_graph_reasoning", label:"Knowledge graph / symbolic reasoning", layer:"core",
+    blurb:"Reasons over entities, relationships and rules to infer outcomes beyond correlations.",
+    strongWhen:{ primaryTask:["graph_reasoning","retrieve_answer"], groundingNeed:["knowledge_graph"], explainabilityNeed:["high"] },
+    companions:["rag","deterministic_automation"],
+    traits:[ {attr:"primaryTask",value:"graph_reasoning",label:"Relationship reasoning"}, {attr:"groundingNeed",value:"knowledge_graph",label:"Structured knowledge graph"}, {attr:"explainabilityNeed",value:"high",label:"Traceable reasoning"} ] }
+];
+var CANDIDATE_BY_ID = {};
+CANDIDATES.forEach(function(c){ CANDIDATE_BY_ID[c.id] = c; });
+
+/* ============ Fallback questions (prompting order) ============ */
+var QUESTIONS = [
+  { attr:"primaryTask", question:"What's the main job this system needs to do?",
+    options:["rule_execution","classification","forecasting","anomaly_detection","ranking_recommendation","structured_extraction","retrieve_answer","free_generation","optimization","interactive_support","action_execution","graph_reasoning"] },
+  { attr:"modalities", multi:true, question:"What kind of data does it work with?",
+    options:["text","image","video","audio","tabular","timeseries"] },
+  { attr:"autonomyLevel", question:"How much should it act on its own?",
+    options:["none","decision_support","human_in_the_loop","human_on_the_loop","human_out_of_the_loop"] },
+  { attr:"criticality", question:"How high-stakes are mistakes?",
+    options:["low","moderate","high","very_high"] },
+  { attr:"groundingNeed", question:"Does it need to cite or draw on specific sources?",
+    options:["none","enterprise_docs","web_freshness","knowledge_graph","citations_required"] },
+  { attr:"determinismRequired", question:"Does it need to give the exact same answer every time?",
+    options:["hard","high","medium","low"] },
+  { attr:"latencyClass", question:"How fast does it need to respond?",
+    options:["hard_realtime","interactive_subsecond","seconds","minutes","batch"] },
+  { attr:"labeledDataAvailability", question:"Do you have historical examples labeled with the right answer?",
+    options:["none","low","moderate","high"] }
+];
+
+/* ============ Examples ============ */
+var EXAMPLES = [
+  "Answer HR policy questions from our current documents with citations",
+  "Detect defects from factory camera images in real time",
+  "Reset passwords and update tickets automatically after approval",
+  "Roster nurses under union rules and shift constraints"
+];
+
+/* ============ Parser ============ */
+function parseUseCaseText(text){
+  var t = " " + text.toLowerCase() + " ";
+  var out = {};
+  function set(attr, value, confidence){
+    if(!out[attr] || confidence > out[attr].confidence) out[attr] = { value:value, confidence:confidence };
+  }
+  function addModality(m, confidence){
+    if(!out.modalities) out.modalities = { value:[], confidence:confidence };
+    if(out.modalities.value.indexOf(m) === -1) out.modalities.value.push(m);
+    out.modalities.confidence = Math.max(out.modalities.confidence, confidence);
+  }
+  var tests = [
+    [/\b(rule|policy rule|deterministic|same answer every time|fixed logic|eligib\w*|compliance)\b/, function(){ set("primaryTask","rule_execution",0.75); }],
+    [/\b(forecast\w*|predict\w*|demand plan\w*|projection)\b/, function(){ set("primaryTask","forecasting",0.7); }],
+    [/\b(anomaly|outlier|unusual activity|intrusion|fraud detection)\b/, function(){ set("primaryTask","anomaly_detection",0.72); }],
+    [/\b(classify|categori[sz]e|screen\w*|triage|spam|risk score)\b/, function(){ set("primaryTask","classification",0.65); }],
+    [/\b(recommend\w*|personali[sz]ed?|next best offer|suggest (products|content)|tailor\w*)\b/, function(){ set("primaryTask","ranking_recommendation",0.72); set("personalizationNeed","individual",0.6); }],
+    [/\b(extract\w*|parse|pull out|entit(y|ies)|ocr|clause)\b/, function(){ set("primaryTask","structured_extraction",0.7); }],
+    [/\b(answer questions|q&a|cite\w*|citation\w*|search (our|internal)|knowledge base|from (our|current) documents|policy docs?)\b/, function(){ set("primaryTask","retrieve_answer",0.75); set("groundingNeed","citations_required",0.7); set("knowledgeFreshness","current",0.6); }],
+    [/\b(draft|summari[sz]e|rewrite|compose|write (a|an|the)|generate (a|an|the)?\s?report|blog|brief|copy)\b/, function(){ set("primaryTask","free_generation",0.65); }],
+    [/\b(optimi[sz]e|schedul\w*|roster\w*|route\w*|allocat\w*|minimi[sz]e cost|maximi[sz]e)\b/, function(){ set("primaryTask","optimization",0.78); set("constraintComplexity","heavy",0.6); }],
+    [/\b(chat ?bot|assistant|help desk|support (bot|triage)|conversation\w*)\b/, function(){ set("primaryTask","interactive_support",0.6); }],
+    [/\b(book|send|update|change|execute|automatically|take action|reset (a |the )?password|open a ticket|create a ticket|trigger)\b/, function(){ set("primaryTask","action_execution",0.72); set("environmentActionNeed","write_actions",0.72); }],
+    [/\b(relationship\w*|network analysis|dependenc(y|ies)|linked entities|connections between)\b/, function(){ set("primaryTask","graph_reasoning",0.7); }],
+    [/\b(image|photo|camera|visual inspection|scan\w*)\b/, function(){ addModality("image",0.8); }],
+    [/\bvideo\b/, function(){ addModality("video",0.8); }],
+    [/\b(audio|voice|call|transcribe|speaker|speech)\b/, function(){ addModality("audio",0.8); }],
+    [/\b(spreadsheet|transaction|tabular|sensor|numeric data)\b/, function(){ addModality("tabular",0.6); }],
+    [/\btime series\b/, function(){ addModality("timeseries",0.7); }],
+    [/\b(deterministic|always the same|fixed rule|must be consistent|reproducible|no errors allowed)\b/, function(){ set("determinismRequired","hard",0.75); }],
+    [/\b(high.?risk|regulated|medical|health\w*|credit|justice|legal|employment|benefits|safety.?critical|life.?critical)\b/, function(){ set("criticality","high",0.7); }],
+    [/\b(real.?time|instantly|immediately|within seconds|live)\b/, function(){ set("latencyClass","interactive_subsecond",0.6); }],
+    [/\b(explainable|auditable|transparent reasoning|must (be able to )?explain)\b/, function(){ set("explainabilityNeed","high",0.65); }],
+    [/\b(low.?cost|cheap|budget|cost.?sensitive)\b/, function(){ set("costSensitivity","high",0.55); }],
+    [/\b(current|up.?to.?date|latest) (docs?|documents?|polic(y|ies)|information)\b/, function(){ set("knowledgeFreshness","current",0.6); }]
+  ];
+  tests.forEach(function(pair){ if(pair[0].test(t)) pair[1](); });
+  if(!out.modalities && text.trim().length > 0) addModality("text", 0.4);
+  return out;
+}
+
+/* ============ Hard rules ============ */
+function applyHardRules(attrs){
+  var bonus = {}, penalty = {};
+  function add(map, id, amt){ map[id] = (map[id] || 0) + amt; }
+  function val(k){ return attrs[k] ? attrs[k].value : undefined; }
+  function has(k, list){
+    var v = val(k);
+    if(v === undefined || v === null) return false;
+    if(Array.isArray(v)) return v.some(function(x){ return list.indexOf(x) !== -1; });
+    return list.indexOf(v) !== -1;
+  }
+
+  if(val("primaryTask") === "rule_execution" && has("determinismRequired", ["hard","high"])){
+    add(bonus,"deterministic_automation",12); add(penalty,"llm",8); add(penalty,"ai_agent",12); add(penalty,"multi_agent_system",12);
+  }
+  if(has("modalities", ["image","video"])) add(bonus,"computer_vision",10);
+  if(has("modalities", ["audio"])) add(bonus,"speech_audio_ai",10);
+  if(val("primaryTask") === "retrieve_answer" && (has("groundingNeed", ["enterprise_docs","web_freshness","citations_required","knowledge_graph"]) || val("knowledgeFreshness") === "current")){
+    add(bonus,"rag",10); add(penalty,"llm",6);
+  }
+  if(val("taskDecomposability") === "fixed_steps" && has("autonomyLevel", ["none","decision_support","human_in_the_loop"])){
+    add(bonus,"llm_workflow",8); add(penalty,"ai_agent",5);
+  }
+  if(has("environmentActionNeed", ["write_actions","real_world_actions"]) && val("taskDecomposability") === "open_ended" && has("autonomyLevel", ["human_on_the_loop","human_out_of_the_loop"])){
+    add(bonus,"ai_agent",10);
+  }
+  if(val("taskDecomposability") === "open_ended" && val("subtaskSpecialization") === "multiple_specialists"){
+    add(bonus,"multi_agent_system",10);
+  } else {
+    add(penalty,"multi_agent_system",6);
+  }
+  if(val("primaryTask") === "optimization" || val("constraintComplexity") === "heavy") add(bonus,"optimization_ai",12);
+  if(val("primaryTask") === "ranking_recommendation" && val("personalizationNeed") === "individual") add(bonus,"recommender_system",10);
+  if(has("criticality", ["high","very_high"])){
+    add(penalty,"llm",6); add(penalty,"ai_agent",10); add(penalty,"multi_agent_system",12);
+  }
+  if(has("labeledDataAvailability", ["none","low"]) && has("modalities", ["text"]) && val("taskDecomposability") === "open_ended"){
+    add(bonus,"llm",6); add(bonus,"rag",4); add(penalty,"predictive_ml",4); add(penalty,"traditional_nlp",4);
+  }
+  if(val("latencyClass") === "hard_realtime"){
+    add(penalty,"llm_workflow",10); add(penalty,"ai_agent",12); add(penalty,"multi_agent_system",12); add(penalty,"rag",6);
+  }
+  return { bonus:bonus, penalty:penalty };
+}
+
+var LAYER_BIAS = { baseline:3, core:2, grounding:1, orchestration:-1, interaction:1 };
+
+function computeScores(attrs){
+  var rules = applyHardRules(attrs);
+  var results = CANDIDATES.map(function(c){
+    var raw = 0, matched = [], blocked = [];
+    Object.keys(attrs).forEach(function(key){
+      var meta = attrs[key]; var value = meta.value; var confidence = meta.confidence === undefined ? 1 : meta.confidence;
+      var priority = (ATTR[key] && ATTR[key].priority) || 2;
+      if(c.strongWhen && c.strongWhen[key]){
+        var sList = c.strongWhen[key];
+        var isMatch = Array.isArray(value) ? value.some(function(v){ return sList.indexOf(v) !== -1; }) : sList.indexOf(value) !== -1;
+        if(isMatch){ raw += priority * 2 * confidence; matched.push(key); }
+      }
+      if(c.penalizeWhen && c.penalizeWhen[key]){
+        var pList = c.penalizeWhen[key];
+        var isMatch2 = Array.isArray(value) ? value.some(function(v){ return pList.indexOf(v) !== -1; }) : pList.indexOf(value) !== -1;
+        if(isMatch2){ raw -= priority * 2 * confidence; blocked.push(key); }
+      }
+    });
+    raw += (rules.bonus[c.id] || 0) - (rules.penalty[c.id] || 0);
+    raw += LAYER_BIAS[c.layer] || 0;
+    return { c:c, raw:raw, matched:matched, blocked:blocked };
+  });
+  var raws = results.map(function(r){ return r.raw; });
+  var min = Math.min.apply(null, raws), max = Math.max.apply(null, raws);
+  var span = (max - min) || 1;
+  results.forEach(function(r){ r.norm = Math.round(100 * (r.raw - min) / span); });
+  results.sort(function(a,b){ return b.raw - a.raw; });
+  return results;
+}
+
+function computeConfidence(attrs, scored){
+  var coreKeys = Object.keys(ATTR).filter(function(k){ return ATTR[k].priority >= 4; });
+  var sumAll = coreKeys.reduce(function(s,k){ return s + ATTR[k].priority; }, 0);
+  var sumKnown = coreKeys.reduce(function(s,k){ return attrs[k] ? s + ATTR[k].priority : s; }, 0);
+  var coverage = sumAll ? sumKnown / sumAll : 0;
+  var top1 = scored[0] ? scored[0].raw : 0, top2 = scored[1] ? scored[1].raw : 0;
+  var margin = Math.max(0, Math.min(1, (top1 - top2) / 12));
+  var consistency = 1;
+  if(attrs.determinismRequired && attrs.determinismRequired.value === "hard" && attrs.primaryTask && attrs.primaryTask.value === "free_generation") consistency -= 0.4;
+  if(attrs.criticality && attrs.criticality.value === "very_high" && attrs.autonomyLevel && attrs.autonomyLevel.value === "human_out_of_the_loop") consistency -= 0.3;
+  consistency = Math.max(0, consistency);
+  return Math.round(100 * (0.45 * coverage + 0.35 * margin + 0.20 * consistency));
+}
+
+/* ============ State ============ */
+var state = { text:"", inferred:{}, userAttrs:{}, skippedQuestions:{} };
+
+function effectiveAttrs(){
+  var out = {};
+  Object.keys(state.inferred).forEach(function(k){ out[k] = state.inferred[k]; });
+  Object.keys(state.userAttrs).forEach(function(k){
+    if(k === "modalities"){
+      var inferredArr = (state.inferred.modalities && state.inferred.modalities.value) || [];
+      var merged = inferredArr.slice();
+      state.userAttrs.modalities.forEach(function(v){ if(merged.indexOf(v) === -1) merged.push(v); });
+      out.modalities = { value:merged, confidence:1 };
+    } else {
+      out[k] = { value: state.userAttrs[k], confidence:1 };
+    }
+  });
+  return out;
+}
+
+function isActive(attrs, attr, value){
+  var meta = attrs[attr];
+  if(!meta) return false;
+  return Array.isArray(meta.value) ? meta.value.indexOf(value) !== -1 : meta.value === value;
+}
+
+function toggleUserAttr(attr, value){
+  if(attr === "modalities"){
+    var cur = state.userAttrs.modalities || [];
+    var idx = cur.indexOf(value);
+    if(idx !== -1) cur = cur.slice(0,idx).concat(cur.slice(idx+1));
+    else cur = cur.concat([value]);
+    if(cur.length === 0) delete state.userAttrs.modalities;
+    else state.userAttrs.modalities = cur;
+  } else {
+    if(state.userAttrs[attr] === value) delete state.userAttrs[attr];
+    else state.userAttrs[attr] = value;
+  }
+  render();
+}
+
+function removeFilter(attr, value){
+  if(attr === "modalities" && value){
+    var cur = state.userAttrs.modalities || [];
+    state.userAttrs.modalities = cur.filter(function(v){ return v !== value; });
+    if(state.userAttrs.modalities.length === 0) delete state.userAttrs.modalities;
+  } else {
+    delete state.userAttrs[attr];
+  }
+  render();
+}
+
+/* ============ Rendering ============ */
+var $ = function(id){ return document.getElementById(id); };
+function el(tag, attrs, children){
+  var node = document.createElement(tag);
+  if(attrs) Object.keys(attrs).forEach(function(k){
+    if(k === "class") node.className = attrs[k];
+    else if(k === "text") node.textContent = attrs[k];
+    else if(k.indexOf("on") === 0 && typeof attrs[k] === "function") node.addEventListener(k.slice(2).toLowerCase(), attrs[k]);
+    else node.setAttribute(k, attrs[k]);
+  });
+  (children || []).forEach(function(c){ if(c) node.appendChild(c); });
+  return node;
+}
+
+function renderExamples(){
+  var row = $("example-row");
+  row.innerHTML = "";
+  EXAMPLES.forEach(function(ex){
+    row.appendChild(el("button", { class:"example-chip", type:"button", onClick:function(){
+      $("usecase").value = ex;
+      state.text = ex;
+      state.inferred = parseUseCaseText(ex);
+      render();
+    } }, [document.createTextNode(ex)]));
+  });
+}
+
+function renderFilterSummary(){
+  var wrap = $("filters-summary");
+  wrap.innerHTML = "";
+  var entries = [];
+  Object.keys(state.userAttrs).forEach(function(attr){
+    if(attr === "modalities"){
+      state.userAttrs.modalities.forEach(function(v){ entries.push({attr:attr, value:v}); });
+    } else {
+      entries.push({attr:attr, value:state.userAttrs[attr]});
+    }
+  });
+  entries.forEach(function(entry){
+    var label = labelFor(entry.attr, entry.value);
+    var chip = el("span", { class:"filter-chip" }, [
+      document.createTextNode(label)
+    ]);
+    var btn = el("button", { class:"x-btn", type:"button", "aria-label":"Remove " + label, onClick:function(){ removeFilter(entry.attr, entry.attr === "modalities" ? entry.value : undefined); } }, [document.createTextNode("×")]);
+    chip.appendChild(btn);
+    wrap.appendChild(chip);
+  });
+}
+
+function nextQuestion(attrs){
+  for(var i=0;i<QUESTIONS.length;i++){
+    var q = QUESTIONS[i];
+    if(state.skippedQuestions[q.attr]) continue;
+    if(!attrs[q.attr]) return { q:q, index:i };
+  }
+  return null;
+}
+
+function renderQuestion(){
+  var attrs = effectiveAttrs();
+  var card = $("question-card");
+  card.innerHTML = "";
+  card.appendChild(el("div", { class:"panel-title", text:"Not sure? Answer instead" }));
+
+  var nq = nextQuestion(attrs);
+  if(!nq){
+    card.appendChild(el("p", { class:"question-done", text:"You've answered every guiding question — check the ranked list for your best match." }));
+    var restart = el("button", { type:"button", style:"margin-top:0.5rem;" }, [document.createTextNode("Restart questions")]);
+    restart.className = "clear-all-btn";
+    restart.addEventListener("click", function(){ state.skippedQuestions = {}; render(); });
+    card.appendChild(restart);
+    return;
+  }
+  var q = nq.q, idx = nq.index;
+  card.appendChild(el("div", { class:"question-progress", text:"Question " + (idx+1) + " of " + QUESTIONS.length }));
+  card.appendChild(el("div", { class:"question-text", text:q.question }));
+
+  var optRow = el("div", { class:"option-row" });
+  q.options.forEach(function(value){
+    var pressed = isActive(attrs, q.attr, value);
+    var btn = el("button", {
+      class:"option-btn", type:"button", "aria-pressed": pressed ? "true":"false",
+      onClick:function(){ toggleUserAttr(q.attr, value); }
+    }, [document.createTextNode(labelFor(q.attr, value))]);
+    optRow.appendChild(btn);
+  });
+  card.appendChild(optRow);
+
+  var actions = el("div", { class:"question-actions" });
+  var skipBtn = el("button", { type:"button" }, [document.createTextNode("Skip this question")]);
+  skipBtn.addEventListener("click", function(){ state.skippedQuestions[q.attr] = true; render(); });
+  actions.appendChild(skipBtn);
+  if(q.multi){
+    var doneBtn = el("button", { type:"button" }, [document.createTextNode("Continue")]);
+    doneBtn.addEventListener("click", function(){
+      if(!state.userAttrs.modalities || state.userAttrs.modalities.length === 0){
+        state.userAttrs.modalities = ["text"];
+      }
+      render();
+    });
+    actions.appendChild(doneBtn);
+  }
+  card.appendChild(actions);
+}
+
+function traitChip(attrs, trait){
+  var pressed = isActive(attrs, trait.attr, trait.value);
+  return el("button", {
+    class:"trait-chip", type:"button", "aria-pressed": pressed ? "true":"false",
+    onClick:function(){ toggleUserAttr(trait.attr, trait.value); }
+  }, [document.createTextNode(trait.label)]);
+}
+
+function buildResultCard(attrs, entry, rank, isTop){
+  var c = entry.c;
+  var card = el("div", { class:"result-card" + (isTop ? " is-top":"") });
+  var top = el("div", { class:"result-top-row" });
+  if(rank !== null){
+    top.appendChild(el("div", { class:"rank-badge", text:String(rank) }));
+  }
+  var heading = el("div", { class:"result-heading" });
+  var nameRow = el("div", { class:"result-name-row" }, [
+    el("span", { class:"result-name", text:c.label }),
+    el("span", { class:"tag tag-" + c.layer, text:
+      c.layer === "baseline" ? "Baseline" : c.layer === "core" ? "Core capability" :
+      c.layer === "grounding" ? "Grounding" : c.layer === "orchestration" ? "Orchestration" : "Interaction" })
+  ]);
+  heading.appendChild(nameRow);
+  heading.appendChild(el("p", { class:"result-blurb", text:c.blurb }));
+  top.appendChild(heading);
+
+  if(rank !== null){
+    var scoreBox = el("div", { class:"result-score" });
+    scoreBox.appendChild(el("div", { class:"score-num", text:Math.max(0,entry.norm) + "%" }));
+    var track = el("div", { class:"score-track" });
+    track.appendChild(el("div", { class:"score-fill", style:"width:" + Math.max(0,Math.min(100,entry.norm)) + "%" }));
+    scoreBox.appendChild(track);
+    top.appendChild(scoreBox);
+  }
+  card.appendChild(top);
+
+  var traitRow = el("div", { class:"trait-row" });
+  c.traits.forEach(function(trait){ traitRow.appendChild(traitChip(attrs, trait)); });
+  card.appendChild(traitRow);
+
+  if(entry.blocked && entry.blocked.length){
+    var labels = entry.blocked.map(function(k){ return labelFor(k, attrs[k].value); });
+    card.appendChild(el("p", { class:"note-row note-blocked", text:"Weaker fit: " + labels.join(", ") }));
+  }
+  if(c.companions && c.companions.length){
+    var compLabels = c.companions.map(function(id){ return CANDIDATE_BY_ID[id] ? CANDIDATE_BY_ID[id].label : id; });
+    card.appendChild(el("p", { class:"note-row note-companions", text:"Pairs well with: " + compLabels.join(", ") }));
+  }
+  return card;
+}
+
+var LAYER_ORDER = ["baseline","core","grounding","orchestration","interaction"];
+var LAYER_TITLES = { baseline:"Baseline", core:"Core capability", grounding:"Grounding pattern", orchestration:"Orchestration pattern", interaction:"Interaction pattern" };
+
+function renderResults(){
+  var attrs = effectiveAttrs();
+  var hasSignal = Object.keys(attrs).length > 0;
+  var root = $("results-root");
+  root.innerHTML = "";
+  var emptyHint = $("empty-hint");
+
+  if(!hasSignal){
+    emptyHint.textContent = "Browsing all 14 approaches, grouped by pattern. Start typing, answer a question, or tap any characteristic to rank them for your use case.";
+    $("results-count").textContent = "14 approaches available";
+    $("confidence-meter").innerHTML = "";
+    LAYER_ORDER.forEach(function(layer){
+      var group = CANDIDATES.filter(function(c){ return c.layer === layer; });
+      if(!group.length) return;
+      root.appendChild(el("div", { class:"layer-heading", text:LAYER_TITLES[layer] }));
+      var list = el("div", { class:"result-list" });
+      group.forEach(function(c){
+        list.appendChild(buildResultCard(attrs, { c:c, blocked:[] }, null, false));
+      });
+      root.appendChild(list);
+    });
+    return;
+  }
+
+  emptyHint.textContent = "";
+  var scored = computeScores(attrs);
+  var confidence = computeConfidence(attrs, scored);
+
+  $("results-count").textContent = scored.length + " techniques ranked for your use case";
+  var confWrap = $("confidence-meter");
+  confWrap.innerHTML = "";
+  confWrap.appendChild(document.createTextNode("Match confidence"));
+  var track = el("div", { class:"confidence-track" });
+  track.appendChild(el("div", { class:"confidence-fill", style:"width:" + confidence + "%" }));
+  confWrap.appendChild(track);
+  confWrap.appendChild(el("span", { class:"confidence-num", text:confidence + "%" }));
+
+  var threshold = 45;
+  var topCount = Math.max(3, scored.filter(function(r){ return r.norm >= threshold; }).length);
+  topCount = Math.min(topCount, scored.length);
+  var visible = scored.slice(0, topCount);
+  var rest = scored.slice(topCount);
+
+  var list = el("div", { class:"result-list" });
+  visible.forEach(function(entry, i){
+    list.appendChild(buildResultCard(attrs, entry, i+1, i === 0));
+  });
+  root.appendChild(list);
+
+  if(rest.length){
+    var details = el("details", { class:"more-toggle" });
+    var summary = el("summary", { text:"Show " + rest.length + " more (lower relevance)" });
+    details.appendChild(summary);
+    var restList = el("div", { class:"result-list" });
+    rest.forEach(function(entry, i){
+      restList.appendChild(buildResultCard(attrs, entry, topCount + i + 1, false));
+    });
+    details.appendChild(restList);
+    root.appendChild(details);
+  }
+}
+
+function render(){
+  renderFilterSummary();
+  renderQuestion();
+  renderResults();
+}
+
+/* ============ Wire up ============ */
+var debounceTimer;
+$("usecase").addEventListener("input", function(e){
+  var text = e.target.value;
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(function(){
+    state.text = text;
+    state.inferred = parseUseCaseText(text);
+    render();
+  }, 280);
+});
+
+$("clear-filters-btn").addEventListener("click", function(){
+  state.userAttrs = {};
+  render();
+});
+
+$("reset-btn").addEventListener("click", function(){
+  state.text = ""; state.inferred = {}; state.userAttrs = {}; state.skippedQuestions = {};
+  $("usecase").value = "";
+  render();
+});
+
+/* ============ Tile and fullscreen modes ============ */
+var fullscreenBtn = $("fullscreen-btn");
+var fullscreenLabel = $("fullscreen-label");
+var fullscreenStatus = $("fullscreen-status");
+var fullscreenRoot = document.documentElement;
+var tileLauncher = $("tile-launcher");
+var tileLaunchButton = $("tile-launch-button");
+var tileStatus = $("tile-status");
+var appView = $("app-view");
+var tileEmbedMode = fullscreenRoot.classList.contains("tile-embed");
+var fullscreenAvailable = Boolean(document.fullscreenEnabled && fullscreenRoot.requestFullscreen);
+var useNewTabFallback = !fullscreenAvailable;
+var directUrl = new URL(window.location.href);
+directUrl.searchParams.set("display", "full");
+
+function updateDisplayMode(){
+  var active = Boolean(document.fullscreenElement);
+  var tileActive = tileEmbedMode && !active;
+  fullscreenBtn.setAttribute("aria-pressed", String(active));
+  fullscreenLabel.textContent = active ? "Exit full screen" : "Full screen";
+  fullscreenBtn.title = active ? "Exit full screen (Esc)" : "Open full screen";
+  fullscreenBtn.hidden = !fullscreenAvailable || tileActive;
+
+  appView.inert = tileActive;
+  appView.setAttribute("aria-hidden", String(tileActive));
+  tileLauncher.setAttribute("aria-hidden", String(!tileActive));
+
+  if(active){
+    requestAnimationFrame(function(){ fullscreenBtn.focus(); });
+  }
+}
+
+function reportFullscreenFailure(error){
+  useNewTabFallback = true;
+  tileLaunchButton.setAttribute("aria-label", "Open AI Type Selector in a new tab");
+  tileLaunchButton.title = "Full screen is unavailable. Open the tool in a new tab.";
+  tileStatus.textContent = "Full screen is unavailable. Select the tool again to open it in a new tab.";
+  fullscreenStatus.textContent = "Full screen is unavailable. You can continue using the standard view.";
+  console.error("Fullscreen request failed:", error);
+}
+
+if(useNewTabFallback){
+  tileLaunchButton.setAttribute("aria-label", "Open AI Type Selector in a new tab");
+  tileLaunchButton.title = "Open the tool in a new tab";
+}
+
+tileLaunchButton.addEventListener("click", function(){
+  if(useNewTabFallback){
+    window.open(directUrl.toString(), "_blank", "noopener");
+    return;
+  }
+
+  fullscreenRoot.requestFullscreen().catch(reportFullscreenFailure);
+});
+
+fullscreenBtn.addEventListener("click", function(){
+  var action = document.fullscreenElement ? document.exitFullscreen() : fullscreenRoot.requestFullscreen();
+  action.catch(reportFullscreenFailure);
+});
+
+document.addEventListener("fullscreenchange", function(){
+  var active = Boolean(document.fullscreenElement);
+  updateDisplayMode();
+  fullscreenStatus.textContent = active
+    ? "Full screen opened. Press Escape or select Exit full screen to return."
+    : "Returned to the SharePoint tile.";
+
+  if(!active && tileEmbedMode){
+    requestAnimationFrame(function(){ tileLaunchButton.focus(); });
+  }
+});
+
+document.addEventListener("fullscreenerror", function(){
+  reportFullscreenFailure(new Error("SharePoint or the browser did not permit full screen."));
+});
+
+renderExamples();
+render();
+updateDisplayMode();
+})();
+</script>
